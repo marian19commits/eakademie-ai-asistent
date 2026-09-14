@@ -1,0 +1,37 @@
+# Virtuální prostředí
+venv/
+.venv/
+env/
+
+# Python mezipaměť a bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Test / coverage / tooling
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Flask runtime data
+flask_session/
+uploads/
+instance/
+
+# Tajné klíče a lokální konfigurace
+.env
+.env.local
+.env.*
+*.secret
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

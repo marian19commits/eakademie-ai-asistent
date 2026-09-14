@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eakademie-ai-asistent-deployment
+  labels:
+    app: eakademie-ai-asistent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eakademie-ai-asistent
+  template:
+    metadata:
+      labels:
+        app: eakademie-ai-asistent
+    spec:
+      containers:
+      - name: eakademie-ai-asistent
+        image: acrdiakcpbu.azurecr.io/eakademie-ai-asistent:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+        - name: AZURE_OPENAI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eakademie-secret
+              key: AZURE_OPENAI_KEY
+        - name: AZURE_OPENAI_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: eakademie-secret
+              key: AZURE_OPENAI_ENDPOINT
+        - name: AZURE_OPENAI_DEPLOYMENT
+          valueFrom:
+            secretKeyRef:
+              name: eakademie-secret
+              key: AZURE_OPENAI_DEPLOYMENT
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eakademie-ai-asistent-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: eakademie-ai-asistent
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000

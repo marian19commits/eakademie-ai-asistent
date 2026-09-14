@@ -1,0 +1,12 @@
+flask
+flask_session
+gunicorn==21.2.0
+openai>=1.1.1
+instructor
+pydantic>=2.0
+python-dotenv
+requests
+tiktoken
+PyPDF2
+sentence-transformers
+faiss-cpu

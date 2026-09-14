@@ -1,0 +1,63 @@
+trigger:
+  branches:
+    include:
+      - main
+
+variables:
+  azureSubscription: 'DIA-KC-P-BU-AKS-Conn'
+  acrName: 'acrdiakcpbu'
+  acrHost: 'acrdiakcpbu.azurecr.io'
+  imageRepository: 'chatbot-backend'
+  tag: '$(Build.BuildId)'
+  aksCluster: 'Lithium-BU'
+  resourceGroup: 'DIA-KC-P-BU'
+
+stages:
+- stage: Build
+  displayName: Build a Push Docker Image
+  jobs:
+  - job: BuildJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: Build and Push image via Azure CLI
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az acr login --name $(acrName)
+          docker build -t $(acrHost)/$(imageRepository):$(tag) -t $(acrHost)/$(imageRepository):latest .
+          docker push $(acrHost)/$(imageRepository):$(tag)
+          docker push $(acrHost)/$(imageRepository):latest
+
+- stage: Deploy
+  displayName: Nasazení do AKS
+  dependsOn: Build
+  jobs:
+  - job: DeployJob
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: Set AKS context
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az aks get-credentials --resource-group $(resourceGroup) --name $(aksCluster) --overwrite-existing
+
+    - task: KubernetesManifest@1
+      displayName: Deploy to AKS
+      inputs:
+        action: 'deploy'
+        connectionType: 'azureResourceManager'
+        azureSubscriptionConnection: '$(azureSubscription)'
+        azureResourceGroup: '$(resourceGroup)'
+        kubernetesCluster: '$(aksCluster)'
+        manifests: |
+          $(Build.SourcesDirectory)/deployment.yaml
+        containers: |
+          $(acrHost)/$(imageRepository):$(tag)
